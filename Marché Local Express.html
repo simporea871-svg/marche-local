@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marché Local Express - Plateforme E-Commerce local</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+
+  <!-- APP CONTAINER CONTAINER -->
+  <div id="app" class="flex-1 flex flex-col min-h-screen"></div>
+
+  <!-- MAIN SCRIPT -->
+  <script>
+    // --- CONSTANTES ET DONNÉES INITIALES ---
+    const RENT_PRICE = 2000; // Prix de la location mensuelle fixé à 2 000 FCFA
+
+    const INITIAL_SHOPS = [
+      {
+        id: "shop_1",
+        name: "Épicerie Bio du Sahel",
+        owner: "Mariam Diallo",
+        phone: "+226 70 11 22 33",
+        city: "Ouagadougou",
+        address: "Secteur 15, Patte d'Oie",
+        operator: "Orange Money",
+        rentStatus: "active", // active, warning, expired
+        rentDaysLeft: 22,
+        rentExpiryDate: "2026-11-18",
+        status: "approved",
+        category: "Alimentation",
+        rating: 4.8,
+        createdAt: "2026-01-15"
+      },
+      {
+        id: "shop_2",
+        name: "Atelier Kaboré Tissage",
+        owner: "Ousmane Kaboré",
+        phone: "+226 76 44 55 66",
+        city: "Bobo-Dioulasso",
+        address: "Marché Central, Allée 4",
+        operator: "Moov Money",
+        rentStatus: "warning",
+        rentDaysLeft: 3,
+        rentExpiryDate: "2026-10-30",
+        status: "approved",
+        category: "Artisanat",
+        rating: 4.9,
+        createdAt: "2026-02-01"
+      },
+      {
+        id: "shop_3",
+        name: "Fasobazin & Mode",
+        owner: "Aïcha Sawadogo",
+        phone: "+226 78 99 88 77",
+        city: "Koudougou",
+        address: "Quartier Zakin",
+        operator: "Wave",
+        rentStatus: "expired",
+        rentDaysLeft: 0,
+        rentExpiryDate: "2026-10-25",
+        status: "approved",
+        category: "Mode & Textile",
+        rating: 4.5,
+        createdAt: "2026-03-10"
+      }
+    ];
+
+    const INITIAL_PRODUCTS = [
+      {
+        id: "p_1",
+        shopId: "shop_1",
+        name: "Huile de Sésame Pure (1L)",
+        price: 3500,
+        category: "Alimentation",
+        stock: 15,
+        image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=500&q=80",
+        description: "Huile de sésame 100% naturelle pressée à froid, produite localement à Koudougou."
+      },
+      {
+        id: "p_2",
+        shopId: "shop_1",
+        name: "Miel Sauvage Biologique (500g)",
+        price: 2500,
+        category: "Alimentation",
+        stock: 8,
+        image: "https://images.unsplash.com/photo-1587049352847-4a222e784d38?w=500&q=80",
+        description: "Miel naturel récolté dans les forêts préservées de la région des Cascades."
+      },
+      {
+        id: "p_3",
+        shopId: "shop_2",
+        name: "Pagne Faso Dan Fani Tissé Main",
+        price: 15000,
+        category: "Artisanat",
+        stock: 5,
+        image: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=500&q=80",
+        description: "Pagne traditionnel haut de gamme tissé par des artisanes passionnées."
+      },
+      {
+        id: "p_4",
+        shopId: "shop_2",
+        name: "Sac en Cuir Artisanal",
+        price: 8500,
+        category: "Mode & Textile",
+        stock: 12,
+        image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=500&q=80",
+        description: "Sac à main fait main en cuir véritable tanné artisanalement."
+      },
+      {
+        id: "p_5",
+        shopId: "shop_3",
+        name: "Boubou Bazin Brodé",
+        price: 25000,
+        category: "Mode & Textile",
+        stock: 3,
+        image: "https://images.unsplash.com/photo-1590736704728-f4730bb30770?w=500&q=80",
+        description: "Ensemble Boubou Bazin richement brodé pour cérémonies et fêtes."
+      }
+    ];
+
+    const INITIAL_NOTIFICATIONS = [
+      {
+        id: "notif_1",
+        shopId: "shop_2",
+        type: "SMS",
+        title: "Alerte Échéance Bail",
+        message: "Rappel : Il ne vous reste que 3 jours de location pour la boutique 'Atelier Kaboré Tissage'. Pensez à renouveler (2 000 FCFA).",
+        date: "2026-10-27 09:30",
+        read: false
+      },
+      {
+        id: "notif_2",
+        shopId: "shop_3",
+        type: "WhatsApp",
+        title: "Boutique Expirée",
+        message: "Attention : Votre bail mensuel pour 'Fasobazin & Mode' a expiré. Veuillez le renouveler via Mobile Money pour réactiver vos produits.",
+        date: "2026-10-25 14:00",
+        read: false
+      }
+    ];
+
+    // --- GESTION DU STORAGE EN MÉMOIRE ET PERSISTANCE (LocalStorage) ---
+    function loadStorage(key, fallback) {
+      try {
+        const item = localStorage.getItem('marche_express_' + key);
+        return item ? JSON.parse(item) : fallback;
+      } catch (e) {
+        return fallback;
+      }
+    }
+
+    function saveStorage(key, value) {
+      try {
+        localStorage.setItem('marche_express_' + key, JSON.stringify(value));
+      } catch (e) {
+        console.error('Erreur de sauvegarde LocalStorage:', e);
+      }
+    }
+
+    // --- ÉTAT GLOBAL DE L'APPLICATION ---
+    const state = {
+      role: 'buyer', // 'buyer' | 'seller' | 'admin'
+      shops: loadStorage('shops', INITIAL_SHOPS),
+      products: loadStorage('products', INITIAL_PRODUCTS),
+      orders: loadStorage('orders', []),
+      notifications: loadStorage('notifications', INITIAL_NOTIFICATIONS),
+      cart: loadStorage('cart', []),
+      currentShopId: 'shop_1', // Boutique sélectionnée pour le rôle Vendeur
+      selectedCategory: 'Tous',
+      searchQuery: '',
+      activeShopFilter: null,
+      
+      // Gestion de la modale Mobile Money
+      paymentModal: {
+        isOpen: false,
+        type: null, // 'rent' ou 'checkout'
+        amount: 0,
+        title: '',
+        metadata: null, // Données complémentaires
+        step: 1, // 1: Choix opérateur & numéro, 2: OTP, 3: Succès
+        operator: 'Orange Money',
+        phone: '70000000',
+        otp: ''
+      },
+
+      // Modales diverses
+      isAddProductOpen: false,
+      isNotifModalOpen: false,
+      toast: null
+    };
+
+    // --- SAUVEGARDE EN CASCADE ---
+    function syncState() {
+      saveStorage('shops', state.shops);
+      saveStorage('products', state.products);
+      saveStorage('orders', state.orders);
+      saveStorage('notifications', state.notifications);
+      saveStorage('cart', state.cart);
+    }
+
+    function showToast(message, type = 'success') {
+      state.toast = { message, type };
+      render();
+      setTimeout(() => {
+        state.toast = null;
+        render();
+      }, 4000);
+    }
+
+    // --- RENDER COMPONENT (Moteur d'affichage) ---
+    function render() {
+      const appEl = document.getElementById('app');
+      appEl.innerHTML = `
+        ${renderHeader()}
+        ${renderToast()}
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          ${renderRoleNotice()}
+          ${state.role === 'buyer' ? renderBuyerView() : ''}
+          ${state.role === 'seller' ? renderSellerView() : ''}
+          ${state.role === 'admin' ? renderAdminView() : ''}
+        </main>
+        ${renderFooter()}
+        ${renderPaymentModal()}
+        ${renderAddProductModal()}
+        ${renderNotificationsModal()}
+      `;
+      lucide.createIcons();
+    }
+
+    // --- COMPOSANT HEADER & NAV ---
+    function renderHeader() {
+      const cartCount = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+      const unreadNotifs = state.notifications.filter(n => !n.read && (state.role === 'admin' || n.shopId === state.currentShopId)).length;
+
+      return `
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 gap-4">
+              
+              <!-- LOGO -->
+              <div class="flex items-center space-x-3 cursor-pointer" onclick="setRole('buyer')">
+                <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-md shadow-emerald-200">
+                  <i data-lucide="store" class="w-6 h-6"></i>
+                </div>
+                <div>
+                  <h1 class="font-extrabold text-lg sm:text-xl text-slate-900 leading-tight">Marché Local <span class="text-emerald-600">Express</span></h1>
+                  <p class="text-xs text-slate-500 hidden sm:block">Vos commerçants de proximité à portée de clic</p>
+                </div>
+              </div>
+
+              <!-- SWITCH DE RÔLE & ACTIONS HEADER -->
+              <div class="flex items-center space-x-2 sm:space-x-4">
+                
+                <!-- BOUTON NOTIFICATIONS -->
+                <button onclick="toggleNotifsModal()" class="relative p-2 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
+                  <i data-lucide="bell" class="w-5 h-5"></i>
+                  ${unreadNotifs > 0 ? `<span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white"></span>` : ''}
+                </button>
+
+                <!-- BOUTON PANIER (Visible surtout pour acheteur) -->
+                ${state.role === 'buyer' ? `
+                  <button onclick="scrollToCart()" class="relative p-2 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex items-center gap-2">
+                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                    ${cartCount > 0 ? `
+                      <span class="bg-emerald-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">${cartCount}</span>
+                    ` : ''}
+                  </button>
+                ` : ''}
+
+                <!-- SÉLECTEUR DE RÔLE (UTILISATEUR) -->
+                <div class="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200 text-xs sm:text-sm font-medium">
+                  <button onclick="setRole('buyer')" class="px-3 py-1.5 rounded-lg transition-all ${state.role === 'buyer' ? 'bg-white text-emerald-700 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'}">
+                    <span class="flex items-center gap-1.5"><i data-lucide="shopping-cart" class="w-4 h-4"></i> Acheteur</span>
+                  </button>
+                  <button onclick="setRole('seller')" class="px-3 py-1.5 rounded-lg transition-all ${state.role === 'seller' ? 'bg-white text-emerald-700 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'}">
+                    <span class="flex items-center gap-1.5"><i data-lucide="briefcase" class="w-4 h-4"></i> Vendeur</span>
+                  </button>
+                  <button onclick="setRole('admin')" class="px-3 py-1.5 rounded-lg transition-all ${state.role === 'admin' ? 'bg-white text-emerald-700 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'}">
+                    <span class="flex items-center gap-1.5"><i data-lucide="shield-check" class="w-4 h-4"></i> Admin</span>
+                  </button>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </header>
+      `;
+    }
+
+    // --- BANDEAU INFORMATIF DE RÔLE ---
+    function renderRoleNotice() {
+      if (state.role === 'seller') {
+        const currentShop = state.shops.find(s => s.id === state.currentShopId);
+        return `
+          <div class="mb-6 bg-gradient-to-r from-emerald-900 to-slate-900 text-white rounded-2xl p-4 sm:p-6 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400 font-bold text-xl shrink-0">
+                ${currentShop ? currentShop.name.charAt(0) : 'V'}
+              </div>
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-xs uppercase tracking-wider text-emerald-400 font-semibold">Mode Vendeur</span>
+                  <span class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full border border-slate-700">Changer de boutique ci-dessous</span>
+                </div>
+                <h2 class="text-xl font-bold">${currentShop ? currentShop.name : 'Ma Boutique'}</h2>
+                <p class="text-xs text-slate-300">Gérée par ${currentShop ? currentShop.owner : 'Propriétaire'} • ${currentShop ? currentShop.city : ''}</p>
+              </div>
+            </div>
+
+            <!-- SÉLECTEUR DE BOUTIQUE POUR LE TEST VENDEUR -->
+            <div class="w-full md:w-auto flex items-center gap-3 bg-white/10 p-2 rounded-xl border border-white/10 backdrop-blur-sm">
+              <span class="text-xs text-slate-300 font-medium whitespace-nowrap">Simuler boutique :</span>
+              <select onchange="changeSellerShop(this.value)" class="bg-slate-800 text-white text-xs sm:text-sm rounded-lg px-3 py-1.5 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                ${state.shops.map(s => `
+                  <option value="${s.id}" ${s.id === state.currentShopId ? 'selected' : ''}>${s.name} (${s.rentStatus.toUpperCase()})</option>
+                `).join('')}
+              </select>
+            </div>
+          </div>
+        `;
+      }
+      if (state.role === 'admin') {
+        return `
+          <div class="mb-6 bg-slate-900 text-white rounded-2xl p-4 sm:p-6 shadow-md flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h2 class="text-lg font-bold">Espace Administration & Gestion des Baux</h2>
+                <p class="text-xs text-slate-400">Supervision des frais de location mensuels (${RENT_PRICE.toLocaleString()} FCFA/mois) et modération des boutiques</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      return '';
+    }
+
+    // --- TOAST DE NOTIFICATION VISUELLE ---
+    function renderToast() {
+      if (!state.toast) return '';
+      const isSuccess = state.toast.type === 'success';
+      return `
+        <div class="fixed bottom-5 right-5 z-50 animate-bounce">
+          <div class="${isSuccess ? 'bg-emerald-600' : 'bg-red-600'} text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3">
+            <i data-lucide="${isSuccess ? 'check-circle-2' : 'alert-circle'}" class="w-5 h-5"></i>
+            <span class="text-sm font-semibold">${state.toast.message}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // ==========================================
+    // 1. VUE ACHETEUR (CLIENT)
+    // ==========================================
+    function renderBuyerView() {
+      // Filtrer les boutiques actives pour l'acheteur (loyer non expiré)
+      const activeShops = state.shops.filter(s => s.status === 'approved' && s.rentStatus !== 'expired');
+      const activeShopIds = activeShops.map(s => s.id);
+
+      // Filtrer les produits
+      let filteredProducts = state.products.filter(p => activeShopIds.includes(p.shopId));
+
+      if (state.selectedCategory !== 'Tous') {
+        filteredProducts = filteredProducts.filter(p => p.category === state.selectedCategory);
+      }
+      if (state.searchQuery) {
+        const q = state.searchQuery.toLowerCase();
+        filteredProducts = filteredProducts.filter(p => 
+          p.name.toLowerCase().includes(q) || 
+          p.description.toLowerCase().includes(q) ||
+          p.category.toLowerCase().includes(q)
+        );
+      }
+      if (state.activeShopFilter) {
+        filteredProducts = filteredProducts.filter(p => p.shopId === state.activeShopFilter);
+      }
+
+      const categories = ['Tous', 'Alimentation', 'Artisanat', 'Mode & Textile', 'Beauté & Soins'];
+
+      return `
+        <div class="space-y-8">
+          
+          <!-- BANNIÈRE HERO -->
+          <div class="relative bg-gradient-to-r from-emerald-600 to-teal-700 rounded-3xl p-6 sm:p-10 text-white overflow-hidden shadow-lg">
+            <div class="relative z-10 max-w-2xl space-y-4">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/30 text-emerald-100 text-xs font-semibold backdrop-blur-md">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> 100% Produit et Vendu Localement
+              </span>
+              <h2 class="text-2xl sm:text-4xl font-extrabold leading-tight">Soutenez les commerçants et artisans de votre ville</h2>
+              <p class="text-emerald-100 text-sm sm:text-base">Commandez vos articles préférés en direct et réglez en toute sécurité par Mobile Money.</p>
+              
+              <!-- RECHERCHE RAPIDE -->
+              <div class="pt-2">
+                <div class="relative max-w-md">
+                  <i data-lucide="search" class="w-5 h-5 text-slate-400 absolute left-3.5 top-3.5"></i>
+                  <input 
+                    type="text" 
+                    placeholder="Rechercher du miel, pagne, huile..." 
+                    value="${state.searchQuery}"
+                    oninput="handleSearch(this.value)"
+                    class="w-full pl-11 pr-4 py-3 rounded-2xl text-slate-900 bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="absolute right-[-20px] bottom-[-40px] opacity-15 pointer-events-none hidden md:block">
+              <i data-lucide="shopping-bag" class="w-96 h-96 text-white"></i>
+            </div>
+          </div>
+
+          <!-- BOUTIQUES À LA UNE -->
+          <section>
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-lg font-bold text-slate-900">Boutiques du Marché</h3>
+                <p class="text-xs text-slate-500">Commerçants à jour de leur abonnement mensuel</p>
+              </div>
+              ${state.activeShopFilter ? `
+                <button onclick="filterByShop(null)" class="text-xs text-emerald-600 font-semibold hover:underline flex items-center gap-1">
+                  <i data-lucide="x" class="w-3.5 h-3.5"></i> Effacer le filtre boutique
+                </button>
+              ` : ''}
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              ${activeShops.map(shop => {
+                const isSelected = state.activeShopFilter === shop.id;
+                return `
+                  <div onclick="filterByShop('${shop.id}')" class="cursor-pointer border ${isSelected ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/30' : 'border-slate-200 bg-white hover:border-slate-300'} p-4 rounded-2xl transition-all shadow-sm">
+                    <div class="flex items-start justify-between">
+                      <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center">
+                          ${shop.name.charAt(0)}
+                        </div>
+                        <div>
+                          <h4 class="font-bold text-slate-900 text-sm leading-tight">${shop.name}</h4>
+                          <span class="text-xs text-slate-500">${shop.city} • ${shop.category}</span>
+                        </div>
+                      </div>
+                      <span class="flex items-center gap-1 bg-amber-50 text-amber-700 text-xs font-semibold px-2 py-0.5 rounded-md border border-amber-200">
+                        <i data-lucide="star" class="w-3 fill-amber-400 text-amber-400"></i> ${shop.rating}
+                      </span>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                      <span><i data-lucide="user" class="w-3.5 h-3.5 inline mr-1"></i>${shop.owner}</span>
+                      <span class="text-emerald-600 font-medium">Voir les articles →</span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </section>
+
+          <!-- FILTRES DE CATÉGORIES -->
+          <div class="flex items-center space-x-2 overflow-x-auto pb-2 custom-scrollbar">
+            ${categories.map(cat => `
+              <button 
+                onclick="setCategory('${cat}')"
+                class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${state.selectedCategory === cat ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}"
+              >
+                ${cat}
+              </button>
+            `).join('')}
+          </div>
+
+          <!-- CATALOGUE PRODUITS ET PANIER CONTAINER -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            
+            <!-- LISTE DES PRODUITS -->
+            <div class="lg:col-span-2 space-y-4">
+              <h3 class="text-lg font-bold text-slate-900 flex items-center justify-between">
+                <span>Catalogue (${filteredProducts.length} articles)</span>
+                ${state.selectedCategory !== 'Tous' ? `<span class="text-xs font-normal text-slate-500">Catégorie: ${state.selectedCategory}</span>` : ''}
+              </h3>
+
+              ${filteredProducts.length === 0 ? `
+                <div class="bg-white rounded-2xl p-8 text-center border border-slate-200 text-slate-500">
+                  <i data-lucide="package-x" class="w-12 h-12 mx-auto text-slate-300 mb-2"></i>
+                  <p class="font-semibold">Aucun article disponible dans cette sélection.</p>
+                </div>
+              ` : `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  ${filteredProducts.map(p => {
+                    const shop = state.shops.find(s => s.id === p.shopId);
+                    return `
+                      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+                        <div>
+                          <div class="h-44 bg-slate-100 relative overflow-hidden">
+                            <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover">
+                            <span class="absolute top-2 left-2 bg-white/90 backdrop-blur-md text-slate-800 text-xs px-2.5 py-1 rounded-full font-medium shadow-sm">
+                              ${shop ? shop.name : 'Vendeur'}
+                            </span>
+                          </div>
+                          <div class="p-4 space-y-2">
+                            <h4 class="font-bold text-slate-900 text-sm line-clamp-1">${p.name}</h4>
+                            <p class="text-xs text-slate-500 line-clamp-2">${p.description}</p>
+                            <div class="pt-2 flex items-baseline justify-between">
+                              <span class="text-lg font-extrabold text-emerald-700">${p.price.toLocaleString()} FCFA</span>
+                              <span class="text-xs text-slate-500">Stock: ${p.stock}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="p-4 pt-0">
+                          <button 
+                            onclick="addToCart('${p.id}')"
+                            class="w-full py-2.5 px-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 transition-colors border border-emerald-200"
+                          >
+                            <i data-lucide="shopping-cart" class="w-4 h-4"></i> Ajouter au panier
+                          </button>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              `}
+            </div>
+
+            <!-- PANIER DE COMMANDE (SIDEBAR SUR DESKTOP) -->
+            <div id="cart-section" class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm sticky top-20">
+              <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                  <i data-lucide="shopping-bag" class="w-5 h-5 text-emerald-600"></i> Mon Panier
+                </h3>
+                ${state.cart.length > 0 ? `
+                  <button onclick="clearCart()" class="text-xs text-red-500 hover:underline">Vider</button>
+                ` : ''}
+              </div>
+
+              ${state.cart.length === 0 ? `
+                <div class="py-8 text-center text-slate-400 space-y-2">
+                  <i data-lucide="shopping-cart" class="w-10 h-10 mx-auto stroke-1"></i>
+                  <p class="text-xs">Votre panier est vide pour le moment</p>
+                </div>
+              ` : `
+                <div class="space-y-3 max-h-80 overflow-y-auto custom-scrollbar pr-1">
+                  ${state.cart.map(item => `
+                    <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl text-xs">
+                      <div class="flex-1 pr-2">
+                        <h5 class="font-semibold text-slate-800 line-clamp-1">${item.name}</h5>
+                        <p class="text-slate-500">${item.price.toLocaleString()} FCFA x ${item.quantity}</p>
+                      </div>
+                      <div class="flex items-center gap-1.5">
+                        <button onclick="updateCartQty('${item.id}', -1)" class="w-6 h-6 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-700 hover:bg-slate-100 font-bold">-</button>
+                        <span class="font-bold w-4 text-center">${item.quantity}</span>
+                        <button onclick="updateCartQty('${item.id}', 1)" class="w-6 h-6 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-700 hover:bg-slate-100 font-bold">+</button>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-slate-100 space-y-3">
+                  <div class="flex justify-between text-sm font-extrabold text-slate-900">
+                    <span>Total à payer</span>
+                    <span class="text-emerald-700">${getCartTotal().toLocaleString()} FCFA</span>
+                  </div>
+
+                  <!-- OPTIONS DE PAIEMENT -->
+                  <div class="space-y-2 pt-2">
+                    <button 
+                      onclick="openCheckoutPayment()" 
+                      class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-200 flex items-center justify-center gap-2 transition-all"
+                    >
+                      <i data-lucide="smartphone" class="w-4 h-4"></i> Payer via Mobile Money
+                    </button>
+                    <button 
+                      onclick="orderViaWhatsApp()" 
+                      class="w-full py-2.5 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 transition-all"
+                    >
+                      <i data-lucide="message-circle" class="w-4 h-4"></i> Commander via WhatsApp
+                    </button>
+                  </div>
+                </div>
+              `}
+            </div>
+
+          </div>
+        </div>
+      `;
+    }
+
+    // ==========================================
+    // 2. VUE VENDEUR (ESPACE GESTION COMMERÇANT)
+    // ==========================================
+    function renderSellerView() {
+      const currentShop = state.shops.find(s => s.id === state.currentShopId);
+      if (!currentShop) return `<div class="p-8 text-center text-slate-500">Aucune boutique sélectionnée.</div>`;
+
+      const shopProducts = state.products.filter(p => p.shopId === currentShop.id);
+      const shopOrders = state.orders.filter(o => o.shopId === currentShop.id);
+
+      // Calcul des alertes de bail
+      const isExpired = currentShop.rentStatus === 'expired';
+      const isWarning = currentShop.rentStatus === 'warning';
+
+      return `
+        <div class="space-y-8">
+          
+          <!-- BANDEAU DE STATUT DU BAIL (LOYER MENSUEL 2000 FCFA) -->
+          <div class="bg-white rounded-3xl p-6 border ${isExpired ? 'border-red-300 bg-red-50/20' : isWarning ? 'border-amber-300 bg-amber-50/20' : 'border-slate-200'} shadow-sm">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <h3 class="font-bold text-slate-900 text-lg">Abonnement & Emplacement du Stand</h3>
+                  ${isExpired ? `
+                    <span class="bg-red-100 text-red-700 text-xs font-bold px-2.5 py-0.5 rounded-full border border-red-200">Expiré</span>
+                  ` : isWarning ? `
+                    <span class="bg-amber-100 text-amber-700 text-xs font-bold px-2.5 py-0.5 rounded-full border border-amber-200">Échéance Proche (${currentShop.rentDaysLeft}j)</span>
+                  ` : `
+                    <span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">Actif (${currentShop.rentDaysLeft}j restants)</span>
+                  `}
+                </div>
+                <p class="text-xs text-slate-500">
+                  Loyer fixe : <strong class="text-slate-800">${RENT_PRICE.toLocaleString()} FCFA / mois</strong> • Prochaine date d'échéance : ${currentShop.rentExpiryDate}
+                </p>
+                ${isExpired ? `
+                  <p class="text-xs text-red-600 font-semibold mt-1">⚠️ Votre boutique est masquée pour les acheteurs tant que le loyer n'est pas renouvelé.</p>
+                ` : ''}
+              </div>
+
+              <button 
+                onclick="openRentPayment('${currentShop.id}')"
+                class="px-5 py-3 ${isExpired ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white font-bold rounded-2xl text-xs shadow-md flex items-center gap-2 whitespace-nowrap transition-all"
+              >
+                <i data-lucide="credit-card" class="w-4 h-4"></i> Renouveler la location (${RENT_PRICE.toLocaleString()} FCFA)
+              </button>
+            </div>
+          </div>
+
+          <!-- TABLEAU DE BORD VENDEUR -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                <i data-lucide="package" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <span class="text-xs text-slate-500 font-medium">Articles en vente</span>
+                <h4 class="text-2xl font-extrabold text-slate-900">${shopProducts.length}</h4>
+              </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+                <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <span class="text-xs text-slate-500 font-medium">Commandes reçues</span>
+                <h4 class="text-2xl font-extrabold text-slate-900">${shopOrders.length}</h4>
+              </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
+                <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <span class="text-xs text-slate-500 font-medium">Chiffre d'affaires</span>
+                <h4 class="text-2xl font-extrabold text-slate-900">
+                  ${shopOrders.reduce((sum, o) => sum + o.total, 0).toLocaleString()} FCFA
+                </h4>
+              </div>
+            </div>
+          </div>
+
+          <!-- GESTION DU CATALOGUE (PRODUITS) -->
+          <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+            <div class="p-6 border-b border-slate-100 flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h3 class="font-bold text-slate-900 text-base">Gestion de mon Catalogue</h3>
+                <p class="text-xs text-slate-500">Ajoutez, modifiez ou mettez à jour le stock de vos produits</p>
+              </div>
+              <button 
+                onclick="toggleAddProductModal()" 
+                class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-sm transition-all"
+              >
+                <i data-lucide="plus" class="w-4 h-4"></i> Nouveau Produit
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-slate-600">
+                <thead class="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-100">
+                  <tr>
+                    <th class="p-4">Produit</th>
+                    <th class="p-4">Catégorie</th>
+                    <th class="p-4">Prix</th>
+                    <th class="p-4">Stock</th>
+                    <th class="p-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  ${shopProducts.length === 0 ? `
+                    <tr>
+                      <td colspan="5" class="p-8 text-center text-slate-400">Aucun produit dans votre catalogue. Cliquez sur "Nouveau Produit" pour en ajouter.</td>
+                    </tr>
+                  ` : shopProducts.map(p => `
+                    <tr class="hover:bg-slate-50">
+                      <td class="p-4 flex items-center gap-3">
+                        <img src="${p.image}" class="w-10 h-10 rounded-lg object-cover bg-slate-100">
+                        <div>
+                          <span class="font-bold text-slate-900 block">${p.name}</span>
+                          <span class="text-slate-400 text-[10px] line-clamp-1">${p.description}</span>
+                        </div>
+                      </td>
+                      <td class="p-4 font-medium">${p.category}</td>
+                      <td class="p-4 font-bold text-emerald-700">${p.price.toLocaleString()} FCFA</td>
+                      <td class="p-4">
+                        <span class="px-2 py-1 rounded-md text-[11px] font-semibold ${p.stock > 0 ? 'bg-slate-100 text-slate-800' : 'bg-red-100 text-red-600'}">
+                          ${p.stock} disponible(s)
+                        </span>
+                      </td>
+                      <td class="p-4 text-right space-x-2">
+                        <button onclick="deleteProduct('${p.id}')" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
+                          <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- HISTORIQUE DES COMMANDES -->
+          <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+            <div class="p-6 border-b border-slate-100">
+              <h3 class="font-bold text-slate-900 text-base">Commandes Récentes Reçues</h3>
+            </div>
+            <div class="p-6">
+              ${shopOrders.length === 0 ? `
+                <p class="text-xs text-slate-400 text-center py-6">Aucune commande reçue pour le moment.</p>
+              ` : `
+                <div class="space-y-3">
+                  ${shopOrders.map(o => `
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
+                      <div>
+                        <div class="flex items-center gap-2">
+                          <span class="font-bold text-slate-900">Réf: ${o.id}</span>
+                          <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-semibold">${o.paymentMethod} (${o.paymentStatus})</span>
+                        </div>
+                        <p class="text-slate-500 mt-1">Client: ${o.customerPhone} • ${o.date}</p>
+                        <p class="text-slate-700 font-medium mt-1">Articles: ${o.items.map(i => i.name + ' (x' + i.quantity + ')').join(', ')}</p>
+                      </div>
+                      <div class="text-right">
+                        <span class="text-base font-extrabold text-emerald-700 block">${o.total.toLocaleString()} FCFA</span>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              `}
+            </div>
+          </div>
+
+        </div>
+      `;
+    }
+
+    // ==========================================
+    // 3. VUE ADMINISTRATEUR (SUPERVISION DU MARCHÉ)
+    // ==========================================
+    function renderAdminView() {
+      // Calcul des revenus de loyer (Seuls les baux non expirés génèrent 2 000 FCFA/mois)
+      const activeShops = state.shops.filter(s => s.rentStatus !== 'expired');
+      const totalRevenue = activeShops.length * RENT_PRICE;
+
+      return `
+        <div class="space-y-8">
+
+          <!-- RECAPITULATIF FINANCIER GESTIONNAIRE -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <span class="text-xs text-slate-500 font-medium">Prix du loyer fixé</span>
+              <h4 class="text-2xl font-extrabold text-slate-900 mt-1">${RENT_PRICE.toLocaleString()} FCFA <span class="text-xs text-slate-400 font-normal">/ mois</span></h4>
+              <p class="text-[11px] text-slate-400 mt-1">Par boutique inscrite</p>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <span class="text-xs text-slate-500 font-medium">Revenus mensuels estimés</span>
+              <h4 class="text-2xl font-extrabold text-emerald-600 mt-1">${totalRevenue.toLocaleString()} FCFA</h4>
+              <p class="text-[11px] text-slate-400 mt-1">Basé sur ${activeShops.length} boutique(s) active(s)</p>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <span class="text-xs text-slate-500 font-medium">Boutiques nécessitant relance</span>
+              <h4 class="text-2xl font-extrabold text-amber-600 mt-1">
+                ${state.shops.filter(s => s.rentStatus === 'warning' || s.rentStatus === 'expired').length}
+              </h4>
+              <p class="text-[11px] text-slate-400 mt-1">Baux expirés ou proches de l'échéance</p>
+            </div>
+          </div>
+
+          <!-- GESTION ET LISTE DES BOUTIQUES DU MARCHÉ -->
+          <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+            <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-slate-900 text-base">Gestion des Emplacements du Marché</h3>
+                <p class="text-xs text-slate-500">Contrôle des abonnements et suspension des commerces impayés</p>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-slate-600">
+                <thead class="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-100">
+                  <tr>
+                    <th class="p-4">Boutique & Gérant</th>
+                    <th class="p-4">Ville</th>
+                    <th class="p-4">Mode de Paiement Préféré</th>
+                    <th class="p-4">Statut Loyer (${RENT_PRICE.toLocaleString()} F)</th>
+                    <th class="p-4 text-right">Action Admin</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  ${state.shops.map(shop => {
+                    return `
+                      <tr class="hover:bg-slate-50">
+                        <td class="p-4">
+                          <span class="font-bold text-slate-900 block">${shop.name}</span>
+                          <span class="text-slate-400 text-[11px]">${shop.owner} • ${shop.phone}</span>
+                        </td>
+                        <td class="p-4 font-medium">${shop.city}</td>
+                        <td class="p-4">
+                          <span class="px-2 py-1 rounded-md bg-slate-100 font-semibold text-slate-700">${shop.operator}</span>
+                        </td>
+                        <td class="p-4">
+                          ${shop.rentStatus === 'active' ? `
+                            <span class="bg-emerald-100 text-emerald-800 font-semibold px-2.5 py-1 rounded-full text-[11px]">En règle (${shop.rentDaysLeft}j)</span>
+                          ` : shop.rentStatus === 'warning' ? `
+                            <span class="bg-amber-100 text-amber-800 font-semibold px-2.5 py-1 rounded-full text-[11px]">Rappel (${shop.rentDaysLeft}j restants)</span>
+                          ` : `
+                            <span class="bg-red-100 text-red-800 font-semibold px-2.5 py-1 rounded-full text-[11px]">Expiré / Suspendu</span>
+                          `}
+                        </td>
+                        <td class="p-4 text-right space-x-2">
+                          <button 
+                            onclick="sendRentReminder('${shop.id}')"
+                            class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs"
+                          >
+                            <i data-lucide="bell" class="w-3.5 h-3.5 inline mr-1"></i> Relancer SMS
+                          </button>
+                          <button 
+                            onclick="toggleShopStatus('${shop.id}')"
+                            class="px-3 py-1.5 ${shop.rentStatus === 'expired' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'} font-semibold rounded-lg text-xs"
+                          >
+                            ${shop.rentStatus === 'expired' ? 'Forcer Réactivation' : 'Suspendre'}
+                          </button>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      `;
+    }
+
+    // ==========================================
+    // MODALES : MOBILE MONEY, NOTIFICATIONS & PRODUIT
+    // ==========================================
+
+    // --- MODALE DE PAIEMENT MOBILE MONEY ---
+    function renderPaymentModal() {
+      const pm = state.paymentModal;
+      if (!pm.isOpen) return '';
+
+      return `
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl transform transition-all">
+            
+            <!-- HEADER MODALE -->
+            <div class="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 text-white relative">
+              <button onclick="closePaymentModal()" class="absolute top-4 right-4 text-white/80 hover:text-white">
+                <i data-lucide="x" class="w-5 h-5"></i>
+              </button>
+              <h3 class="font-bold text-lg">${pm.title}</h3>
+              <p class="text-xs text-emerald-100 mt-1">Guichet de paiement sécurisé Mobile Money</p>
+            </div>
+
+            <div class="p-6 space-y-6">
+              
+              <!-- ÉTAPE 1 : CHOIX DE L'OPÉRATEUR ET NUMÉRO -->
+              ${pm.step === 1 ? `
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-2">1. Choisissez votre opérateur</label>
+                    <div class="grid grid-cols-3 gap-3">
+                      <button onclick="setPaymentOperator('Orange Money')" class="p-3 border-2 rounded-2xl flex flex-col items-center gap-1 transition-all ${pm.operator === 'Orange Money' ? 'border-orange-500 bg-orange-50 text-orange-600 font-bold' : 'border-slate-200 text-slate-600'}">
+                        <i data-lucide="smartphone" class="w-5 h-5"></i>
+                        <span class="text-xs">Orange</span>
+                      </button>
+                      <button onclick="setPaymentOperator('Moov Money')" class="p-3 border-2 rounded-2xl flex flex-col items-center gap-1 transition-all ${pm.operator === 'Moov Money' ? 'border-blue-500 bg-blue-50 text-blue-600 font-bold' : 'border-slate-200 text-slate-600'}">
+                        <i data-lucide="smartphone" class="w-5 h-5"></i>
+                        <span class="text-xs">Moov</span>
+                      </button>
+                      <button onclick="setPaymentOperator('Wave')" class="p-3 border-2 rounded-2xl flex flex-col items-center gap-1 transition-all ${pm.operator === 'Wave' ? 'border-cyan-500 bg-cyan-50 text-cyan-600 font-bold' : 'border-slate-200 text-slate-600'}">
+                        <i data-lucide="smartphone" class="w-5 h-5"></i>
+                        <span class="text-xs">Wave</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">2. Numéro de téléphone Mobile Money</label>
+                    <input 
+                      type="text" 
+                      value="${pm.phone}" 
+                      oninput="state.paymentModal.phone = this.value"
+                      placeholder="Ex: 70 00 00 00" 
+                      class="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+
+                  <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center text-sm">
+                    <span class="text-slate-600 font-medium">Montant à débiter :</span>
+                    <span class="text-lg font-extrabold text-emerald-700">${pm.amount.toLocaleString()} FCFA</span>
+                  </div>
+
+                  <button 
+                    onclick="submitPaymentStep1()" 
+                    class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                  >
+                    Valider et recevoir le code OTP <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              ` : ''}
+
+              <!-- ÉTAPE 2 : CODE OTP DE CONFIRMATION -->
+              ${pm.step === 2 ? `
+                <div class="space-y-4 text-center">
+                  <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto">
+                    <i data-lucide="lock" class="w-6 h-6"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-slate-900">Confirmation de la transaction</h4>
+                    <p class="text-xs text-slate-500 mt-1">Un code de validation simulé à 4 chiffres a été envoyé au <strong>${pm.phone}</strong> (${pm.operator}).</p>
+                  </div>
+
+                  <div class="py-2">
+                    <input 
+                      type="text" 
+                      maxlength="4" 
+                      placeholder="1234" 
+                      value="${pm.otp}" 
+                      oninput="state.paymentModal.otp = this.value"
+                      class="w-36 text-center text-2xl font-extrabold tracking-widest px-4 py-3 border-2 border-slate-300 rounded-2xl focus:border-emerald-500 focus:outline-none"
+                    />
+                    <p class="text-[11px] text-slate-400 mt-2">Tapez n'importe quel code à 4 chiffres pour le test</p>
+                  </div>
+
+                  <button 
+                    onclick="confirmPaymentOTP()" 
+                    class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-sm shadow-md transition-all"
+                  >
+                    Confirmer le paiement de ${pm.amount.toLocaleString()} FCFA
+                  </button>
+                </div>
+              ` : ''}
+
+              <!-- ÉTAPE 3 : PAIEMENT RÉUSSI -->
+              ${pm.step === 3 ? `
+                <div class="space-y-4 text-center py-4">
+                  <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto animate-pulse">
+                    <i data-lucide="check" class="w-8 h-8"></i>
+                  </div>
+                  <h4 class="font-bold text-slate-900 text-lg">Paiement Réussi !</h4>
+                  <p class="text-xs text-slate-600">
+                    Votre transaction de <strong>${pm.amount.toLocaleString()} FCFA</strong> via <strong>${pm.operator}</strong> a été validée avec succès.
+                  </p>
+                  <button 
+                    onclick="closePaymentModal()" 
+                    class="w-full py-3 bg-slate-900 text-white font-bold rounded-2xl text-sm transition-all"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              ` : ''}
+
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- MODALE D'AJOUT DE PRODUIT ---
+    function renderAddProductModal() {
+      if (!state.isAddProductOpen) return '';
+
+      return `
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative">
+            <button onclick="toggleAddProductModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+              <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h3 class="font-bold text-lg text-slate-900 mb-4">Ajouter un produit au catalogue</h3>
+
+            <form onsubmit="handleCreateProduct(event)" class="space-y-4 text-xs">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Nom du produit</label>
+                <input type="text" id="p_name" required placeholder="Ex: Sac en cuir" class="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Prix (FCFA)</label>
+                  <input type="number" id="p_price" required placeholder="5000" class="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Stock</label>
+                  <input type="number" id="p_stock" required placeholder="10" class="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Catégorie</label>
+                <select id="p_category" class="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  <option value="Alimentation">Alimentation</option>
+                  <option value="Artisanat">Artisanat</option>
+                  <option value="Mode & Textile">Mode & Textile</option>
+                  <option value="Beauté & Soins">Beauté & Soins</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">URL d'image (ou laissez par défaut)</label>
+                <input type="url" id="p_image" placeholder="https://..." class="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Description</label>
+                <textarea id="p_desc" rows="3" placeholder="Description de votre article..." class="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+              </div>
+
+              <div class="pt-2 flex justify-end gap-2">
+                <button type="button" onclick="toggleAddProductModal()" class="px-4 py-2 border border-slate-300 rounded-xl text-slate-600 font-semibold">Annuler</button>
+                <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md">Enregistrer le produit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- MODALE DES NOTIFICATIONS ET ALERTES SMS/WHATSAPP ---
+    function renderNotificationsModal() {
+      if (!state.isNotifModalOpen) return '';
+
+      // Filtrer les notifications destinées au rôle courant
+      const notifs = state.notifications.filter(n => state.role === 'admin' || n.shopId === state.currentShopId);
+
+      return `
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="toggleNotifsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+              <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            
+            <div class="flex items-center gap-2 mb-4">
+              <i data-lucide="bell" class="w-5 h-5 text-emerald-600"></i>
+              <h3 class="font-bold text-lg text-slate-900">Centre de Notifications & Alertes</h3>
+            </div>
+
+            <div class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar pr-1">
+              ${notifs.length === 0 ? `
+                <p class="text-xs text-slate-400 text-center py-6">Aucune notification enregistrée.</p>
+              ` : notifs.map(n => `
+                <div class="p-4 rounded-2xl border ${n.type === 'SMS' ? 'border-blue-200 bg-blue-50/40' : 'border-green-200 bg-green-50/40'} text-xs space-y-1">
+                  <div class="flex items-center justify-between font-bold text-slate-900">
+                    <span class="flex items-center gap-1.5">
+                      <i data-lucide="${n.type === 'SMS' ? 'message-square' : 'message-circle'}" class="w-3.5 h-3.5"></i>
+                      ${n.title}
+                    </span>
+                    <span class="text-[10px] text-slate-400">${n.date}</span>
+                  </div>
+                  <p class="text-slate-600 leading-relaxed">${n.message}</p>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- FOOTER DE L'APPLICATION ---
+    function renderFooter() {
+      return `
+        <footer class="bg-white border-t border-slate-200 mt-12 py-8">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 space-y-2">
+            <p class="font-bold text-slate-700">Marché Local Express • Solution Digitale de Commerce de Proximité</p>
+            <p>Loyer mensuel fixe de la boutique : <strong class="text-emerald-700">${RENT_PRICE.toLocaleString()} FCFA / mois</strong></p>
+            <p class="text-[11px] text-slate-400">Paiements gérés via Orange Money, Moov Money & Wave</p>
+          </div>
+        </footer>
+      `;
+    }
+
+    // ==========================================
+    // LOGIQUE DE GESTION ET ACTIONS
+    // ==========================================
+
+    function setRole(role) {
+      state.role = role;
+      render();
+    }
+
+    function changeSellerShop(shopId) {
+      state.currentShopId = shopId;
+      render();
+    }
+
+    function setCategory(cat) {
+      state.selectedCategory = cat;
+      render();
+    }
+
+    function handleSearch(query) {
+      state.searchQuery = query;
+      render();
+    }
+
+    function filterByShop(shopId) {
+      state.activeShopFilter = shopId;
+      render();
+    }
+
+    function addToCart(productId) {
+      const product = state.products.find(p => p.id === productId);
+      if (!product || product.stock <= 0) {
+        showToast("Produit indisponible en stock", "error");
+        return;
+      }
+      
+      const existing = state.cart.find(item => item.id === productId);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        state.cart.push({ ...product, quantity: 1 });
+      }
+
+      syncState();
+      showToast(`${product.name} ajouté au panier !`);
+    }
+
+    function updateCartQty(productId, delta) {
+      const item = state.cart.find(i => i.id === productId);
+      if (!item) return;
+
+      item.quantity += delta;
+      if (item.quantity <= 0) {
+        state.cart = state.cart.filter(i => i.id !== productId);
+      }
+      syncState();
+      render();
+    }
+
+    function clearCart() {
+      state.cart = [];
+      syncState();
+      render();
+    }
+
+    function getCartTotal() {
+      return state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    }
+
+    function scrollToCart() {
+      const el = document.getElementById('cart-section');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // --- PAIEMENT ET RENOUVELLEMENT DE LOYER ---
+    function openRentPayment(shopId) {
+      const shop = state.shops.find(s => s.id === shopId);
+      if (!shop) return;
+
+      state.paymentModal = {
+        isOpen: true,
+        type: 'rent',
+        amount: RENT_PRICE,
+        title: `Renouvellement du bail - ${shop.name}`,
+        metadata: { shopId: shop.id },
+        step: 1,
+        operator: shop.operator || 'Orange Money',
+        phone: shop.phone || '70000000',
+        otp: ''
+      };
+      render();
+    }
+
+    function openCheckoutPayment() {
+      if (state.cart.length === 0) return;
+
+      state.paymentModal = {
+        isOpen: true,
+        type: 'checkout',
+        amount: getCartTotal(),
+        title: 'Paiement de votre Commande',
+        metadata: null,
+        step: 1,
+        operator: 'Orange Money',
+        phone: '70000000',
+        otp: ''
+      };
+      render();
+    }
+
+    function setPaymentOperator(op) {
+      state.paymentModal.operator = op;
+      render();
+    }
+
+    function closePaymentModal() {
+      state.paymentModal.isOpen = false;
+      render();
+    }
+
+    function submitPaymentStep1() {
+      if (!state.paymentModal.phone) {
+        showToast("Veuillez saisir votre numéro de téléphone", "error");
+        return;
+      }
+      state.paymentModal.step = 2;
+      render();
+    }
+
+    function confirmPaymentOTP() {
+      if (!state.paymentModal.otp || state.paymentModal.otp.length < 4) {
+        showToast("Veuillez saisir un code OTP à 4 chiffres", "error");
+        return;
+      }
+
+      const pm = state.paymentModal;
+
+      if (pm.type === 'rent') {
+        // Traitement du renouvellement du loyer de 2 000 FCFA
+        const shop = state.shops.find(s => s.id === pm.metadata.shopId);
+        if (shop) {
+          shop.rentStatus = 'active';
+          shop.rentDaysLeft = 30;
+          shop.rentExpiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+          
+          // Ajouter une notification SMS simulée
+          state.notifications.unshift({
+            id: 'notif_' + Date.now(),
+            shopId: shop.id,
+            type: 'SMS',
+            title: 'Loyer Mensuel Renouvelé',
+            message: `Votre paiement de ${RENT_PRICE.toLocaleString()} FCFA via ${pm.operator} a été confirmé. Votre boutique est active pour 30 jours.`,
+            date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+            read: false
+          });
+        }
+      } else if (pm.type === 'checkout') {
+        // Validation de la commande d'achat
+        const shopId = state.cart[0].shopId;
+        const newOrder = {
+          id: 'CMD-' + Math.floor(1000 + Math.random() * 9000),
+          shopId: shopId,
+          total: getCartTotal(),
+          customerPhone: pm.phone,
+          paymentMethod: pm.operator,
+          paymentStatus: 'Payé',
+          items: [...state.cart],
+          date: new Date().toISOString().replace('T', ' ').substring(0, 16)
+        };
+
+        state.orders.unshift(newOrder);
+
+        // Envoyer une alerte WhatsApp au vendeur pour la nouvelle commande
+        state.notifications.unshift({
+          id: 'notif_' + Date.now(),
+          shopId: shopId,
+          type: 'WhatsApp',
+          title: 'Nouvelle Commande Reçue !',
+          message: `Nouvelle commande (${newOrder.id}) de ${newOrder.total.toLocaleString()} FCFA réglée par Mobile Money.`,
+          date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+          read: false
+        });
+
+        // Vider le panier
+        state.cart = [];
+      }
+
+      syncState();
+      state.paymentModal.step = 3;
+      render();
+    }
+
+    function orderViaWhatsApp() {
+      if (state.cart.length === 0) return;
+      const total = getCartTotal();
+      const shopId = state.cart[0].shopId;
+      const shop = state.shops.find(s => s.id === shopId);
+
+      const text = `Bonjour, je souhaite commander sur Marché Local Express:\n` +
+        state.cart.map(i => `- ${i.name} (x${i.quantity}) : ${(i.price * i.quantity).toLocaleString()} FCFA`).join('\n') +
+        `\nTotal: ${total.toLocaleString()} FCFA`;
+
+      showToast("Ouverture de WhatsApp avec la commande pré-remplie !");
+      setTimeout(() => {
+        window.open(`https://wa.me/${shop ? shop.phone.replace(/[^0-9]/g, '') : ''}?text=${encodeURIComponent(text)}`, '_blank');
+      }, 1000);
+    }
+
+    // --- ACTIONS GESTION PRODUITS ET BOUTIQUES ---
+    function toggleAddProductModal() {
+      state.isAddProductOpen = !state.isAddProductOpen;
+      render();
+    }
+
+    function toggleNotifsModal() {
+      state.isNotifModalOpen = !state.isNotifModalOpen;
+      if (state.isNotifModalOpen) {
+        // Marquer comme lues
+        state.notifications.forEach(n => n.read = true);
+        syncState();
+      }
+      render();
+    }
+
+    function handleCreateProduct(e) {
+      e.preventDefault();
+      const name = document.getElementById('p_name').value;
+      const price = parseFloat(document.getElementById('p_price').value);
+      const stock = parseInt(document.getElementById('p_stock').value);
+      const category = document.getElementById('p_category').value;
+      const image = document.getElementById('p_image').value || "https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&q=80";
+      const description = document.getElementById('p_desc').value;
+
+      const newP = {
+        id: 'p_' + Date.now(),
+        shopId: state.currentShopId,
+        name,
+        price,
+        stock,
+        category,
+        image,
+        description
+      };
+
+      state.products.unshift(newP);
+      syncState();
+      toggleAddProductModal();
+      showToast("Nouveau produit ajouté au catalogue !");
+    }
+
+    function deleteProduct(productId) {
+      state.products = state.products.filter(p => p.id !== productId);
+      syncState();
+      render();
+      showToast("Produit supprimé", "error");
+    }
+
+    function sendRentReminder(shopId) {
+      const shop = state.shops.find(s => s.id === shopId);
+      if (shop) {
+        state.notifications.unshift({
+          id: 'notif_' + Date.now(),
+          shopId: shop.id,
+          type: 'SMS',
+          title: 'Relance Loyer Administrateur',
+          message: `Rappel de l'administration du marché : Votre loyer mensuel de ${RENT_PRICE.toLocaleString()} FCFA arrive à échéance. Veuillez le régler pour continuer à vendre.`,
+          date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+          read: false
+        });
+        syncState();
+        showToast(`SMS de relance envoyé au gérant de ${shop.name}`);
+      }
+    }
+
+    function toggleShopStatus(shopId) {
+      const shop = state.shops.find(s => s.id === shopId);
+      if (shop) {
+        shop.rentStatus = shop.rentStatus === 'expired' ? 'active' : 'expired';
+        syncState();
+        render();
+        showToast(`Statut de la boutique ${shop.name} mis à jour.`);
+      }
+    }
+
+    // --- INITIALISATION ---
+    window.onload = function() {
+      render();
+    };
+  </script>
+</body>
+</html>
